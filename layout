@@ -1,0 +1,82 @@
+@using MyLibrary.ADClasses
+@{ var usrData = new UserInfo();}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - My ASP.NET Application</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    <link rel="stylesheet" href="https://github.com/twbs/bootstrap/blob/main/LICENSE">
+
+</head>
+
+<style>
+    .navbar-nav .nav-link:hover
+    {
+        background-color:#ff6600;
+        color:#fff;
+        transition:background-color 0.3s,color 0.3s;
+    }
+</style>
+
+<body>
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+        <div class="container">
+            @Html.ActionLink("Plexus Library", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Toggle navigation" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
+                <ul class="navbar-nav flex-grow-1">
+                    @if (usrData.checkIfUserIsAdmin())
+                    {
+                        @Html.ActionLink("Admin Books", "Index", "Libraries", new { area = "" }, new { @class = "nav-link" })
+                    }
+                    <li>@Html.ActionLink("Books Availables", "Index", "BooksAvailable", new { area = "" }, new { @class = "nav-link" })</li>
+                    <li>@Html.ActionLink("My Borrowed Books", "MyBorrowedBooks", "BorrowBook", new { area = "" }, new { @class = "nav-link" })</li>
+                    <li>@Html.ActionLink("My Wait List", "MyWaitList", "Waitlist", new { area = "" }, new { @class = "nav-link" })</li>
+                </ul>
+
+                @if (usrData.isLoggedIn())
+                {
+                    <div class="text-light d-flex align-items-center">
+                        <span class="mr-2">
+                            Welcome, @usrData.getUsername()!
+                        </span>
+                        @if (usrData.checkIfUserIsAdmin())
+                        {
+                            <span class="badge badge-pill badge-danger mr-2">Admin</span>
+                            <a href="@Url.Action("ChangeUserRole", "Account", new { newRole = "User" })" class="btn btn-warning btn-sm">Admin</a>
+                        }
+                        else
+                        {
+                            <span class="badge badge-pill badge-success mr-2">User</span>
+                            <a href="@Url.Action("ChangeUserRole", "Account", new { newRole = "Admin" })" class="btn btn-warning btn-sm">User</a>
+                        }
+                        <span class="mx-1"></span>
+                        <a href="@Url.Action("SignOut", "Account")" class="btn btn-danger btn-sm">Sign Out</a>
+                    </div>
+                }
+
+
+            </div>
+        </div>
+    </nav>
+    <div class="container body-content">
+        @RenderBody()
+        <hr />
+        <footer>
+            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
+        </footer>
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+</body>
+</html>
