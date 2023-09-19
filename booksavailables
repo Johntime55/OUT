@@ -1,0 +1,97 @@
+using MyLibrary.Models;
+using System;
+using System.Collections.Generic;
+using System.Data.Entity;
+using System.Linq;
+using System.Net;
+using System.Web;
+using System.Web.Mvc;
+
+namespace MyLibrary.Controllers
+{
+    public class BooksAvailableController : Controller
+    {
+        private I_CoposEntities db = new I_CoposEntities();
+
+        // GET: BooksAvailable
+        public ActionResult Index()
+        {
+            return View(db.BooksAvailables.OrderBy(p => p.Author).Distinct().ToList());
+        }
+
+        // GET: BooksAvailable/Details/5
+        public ActionResult Details(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            BooksAvailable book = db.BooksAvailables.Find(id);
+
+            if (book == null)
+            {
+                return HttpNotFound();
+            }
+
+            var bookDetails = new
+            {
+                Title = book.BookName,
+                Author = book.Author,
+                Isbn10 = book.Isbn10,
+                Publisher = book.Publisher,
+                YearPublished = book.YearPublished,
+                CoverImage = book.CoverImage
+            };
+
+            return Json(bookDetails, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult BorrowAction(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            var book = db.BooksAvailables.Find(id);
+            if (book == null || book.QtyAvailable <= 0)
+            {
+                return HttpNotFound();
+            }
+
+          
+
+            return RedirectToAction("Index");
+        }
+
+        
+
+
+        public ActionResult WaitlistAction(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            var book = db.BooksAvailables.Find(id);
+            if (book == null || book.QtyAvailable > 0)
+            {
+                return HttpNotFound();
+            }
+
+
+            return RedirectToAction("Index");
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                db.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+    }
+}
