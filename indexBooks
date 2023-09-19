@@ -1,0 +1,322 @@
+@using MyLibrary.ADClasses
+@{ var usrData = new UserInfo(); }
+
+@model IEnumerable<MyLibrary.Models.BooksAvailable>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<style>
+    table.table {
+        text-align: center;
+        margin: 0 auto;
+    }
+
+    .table th {
+        background-color: #333;
+        color: #fff;
+    }
+
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+    }
+
+        .action-buttons a {
+            margin: 5px;
+        }
+</style>
+
+<h2 class="text-center">Books Availables</h2>
+
+<table class="table table-bordered table-sm shadow">
+    <tr class="">
+        <th>
+            @Html.DisplayNameFor(model => model.BookName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Author)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Isbn13)
+        </th>
+        @if (usrData.checkIfUserIsAdmin())
+        {
+            <th>
+                @Html.DisplayNameFor(model => model.Isbn10)
+            </th>
+        }
+        <th>
+            @Html.DisplayNameFor(model => model.Publisher)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.YearPublished)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.CoverImage)
+        </th>
+        @if (usrData.checkIfUserIsAdmin())
+        {
+            <th>
+                @Html.DisplayNameFor(model => model.QtyAvailable)
+            </th>
+        }
+        <th>Action</th>
+    </tr>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.BookName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Author)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Isbn13)
+            </td>
+            @if (usrData.checkIfUserIsAdmin())
+            {
+                <td>
+                    @Html.DisplayFor(modelItem => item.Isbn10)
+                </td>
+            }
+            <td>
+                @Html.DisplayFor(modelItem => item.Publisher)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.YearPublished)
+            </td>
+            <td>
+                <img src="@item.CoverImage" class="img-thumbnail" alt="" width="50" height="150" />
+            </td>
+            @if (usrData.checkIfUserIsAdmin())
+            {
+                <td>
+                    @Html.DisplayFor(modelItem => item.QtyAvailable)
+                </td>
+            }
+            <td>
+                <div class="btn-group">
+                    <button class="btn btn-primary btn-sm d-inline mx-2" onclick="showBookDetails(@item.id)">Details</button>
+                    @if (item.QtyAvailable > 0)
+                    {
+                        <button class="btn btn-danger btn-sm d-inline mx-2" onclick="borrowBook('@item.Isbn13')">Borrow</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-warning btn-sm d-inline mx-2" onclick="joinWaitlist('@item.Isbn13')">Waitlist</button>
+                    }
+                </div>
+            </td>
+        </tr>
+    }
+</table>
+
+
+
+<!-- Modal Detail -->
+<div class="modal fade" id="bookDetailsModal" tabindex="-1" role="dialog" aria-labelledby="bookDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookDetailsModalLabel">Detalii Carte</h5>
+            </div>
+            <div class="modal-body" id="bookDetailsContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Închide</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal pentru Waitlist -->
+<div id="waitlistModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="waitlistModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="waitlistModalLabel">Join Waitlist</h5>
+            </div>
+            <div class="modal-body">
+                <p>Do you want to join the waitlist for this book?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                <button type="button" class="btn btn-warning" id="confirmWaitlistButton">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- Modal pentru Confirmare Adăugare cu Succes în Waitlist -->
+<div class="modal fade" id="successWaitlistModal" tabindex="-1" role="dialog" aria-labelledby="successWaitlistModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successWaitlistModalLabel">Confirm</h5>
+            </div>
+            <div class="modal-body">
+                The book has been successfully added to the waiting list!
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Închide</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal  Borrow -->
+<div class="modal fade" id="borrowModal" tabindex="-1" role="dialog" aria-labelledby="borrowModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="borrowModalLabel">Borrow Confirmation</h5>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to borrow this book?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                <button type="button" class="btn btn-warning" id="confirmBorrowButton">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal pentru Confirmare Împrumut cu Succes -->
+<div class="modal fade" id="successBorrowModal" tabindex="-1" role="dialog" aria-labelledby="successBorrowModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successBorrowModalLabel">Confirm</h5>
+            </div>
+            <div class="modal-body">
+                The book has been successfully borrowed!
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Închide</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    //Details
+
+    //Function to display book detail
+    function showBookDetails(bookId) {
+        $.ajax({
+            type: "GET",
+            url: "/BooksAvailable/Details/" + bookId,
+            success: function (data) {
+
+                //Build the modal content with book details
+                var modalContent = `
+                <h5>Titlu: ${data.Title}</h5>
+                <p>Autor: ${data.Author}</p>
+                <p>ISBN-10: ${data.Isbn10}</p>
+                <p>Editor: ${data.Publisher}</p>
+                <p>Anul Publicării: ${data.YearPublished}</p>
+                <img src="${data.CoverImage}" alt="Imagine Carte" class="img-thumbnail" width="150" height="200">
+            `;
+                //Populate the modal
+                $("#bookDetailsContent").html(modalContent);
+
+                // Deschide fereastra modală
+                $("#bookDetailsModal").modal("show");
+            },
+            error: function () {
+                alert("A apărut o eroare la încărcarea detaliilor cărții.");
+            }
+        });
+    }
+
+
+
+  
+
+
+    //Waitlist
+    function joinWaitlist(isbn13) {
+        $('#waitlistModal').modal('show');
+
+        $('#confirmWaitlistButton').click(function () {
+            $.ajax({
+                type: "POST",
+                url: "/Waitlist/Join",
+                data: { isbn13: isbn13 },
+                success: function (response) {
+                    if (response.Success) {
+                        $('#waitlistModal').modal('hide');
+                        $('#successWaitlistModal').modal('show');
+                    } else {
+
+                    }
+                },
+                error: function () {
+
+                }
+            });
+        });
+
+        $('#waitlistModal').on('hidden.bs.modal', function () {
+            $('#confirmWaitlistButton').off('click');
+        });
+    }
+</script>
+
+
+<script>
+    //Borrow
+    var borrowed = [];
+
+    function borrowBook(isbn13) {
+        $('#borrowModal').modal('show');
+
+        $('#confirmBorrowButton').click(function () {
+            $.ajax({
+                type: "POST",
+                url: "/BorrowBook/Borrow",
+                data: { isbn13: isbn13 },
+                success: function (response) {
+                    if (response.Success) {
+                        $('#borrowModal').modal('hide');
+                        $('#successBorrowModal').modal('show');
+                    } else {
+
+                    }
+                },
+                error: function () {
+
+                }
+            });
+        });
+
+        $('#borrowModal').on('hidden.bs.modal', function () {
+            $('#confirmBorrowButton').off('click');
+        });
+
+    }
+
+
+    function closeBorrowModal() {
+        $('#borrowModal').modal('hide');
+    }
+
+
+    function closeSuccessBorrowModal() {
+        $('#successBorrowModal').modal('hide');
+    }
+</script>
+
+
